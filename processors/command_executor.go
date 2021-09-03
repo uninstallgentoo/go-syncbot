@@ -1,75 +1,65 @@
-package commands
+package processors
 
 import (
 	"strings"
-
-	"sync-bot/pkg/service"
+	"sync-bot/models"
 )
 
-type EventPayload struct {
-	Message string      `json:"msg"`
-	Meta    interface{} `json:"meta"`
-}
-
-type Event struct {
-	Method  string
-	Message interface{}
-}
-
-type CommandResult struct {
-	Results []*Event
-}
-
-func NewCommandResult(results []*Event) *CommandResult {
-	return &CommandResult{
-		Results: results,
-	}
-}
-
-type CommandExecutor interface {
-	GetMinRequiredRank() float64
+type Executor interface {
 	Validate(args []string) error
 	Exec(args []string) (*CommandResult, error)
 }
 
 type CommandHandler interface {
+	Handle(msg models.Message)
 	Parse(text string) (*Command, bool)
-	GetHandler(command string) CommandExecutor
+	GetHandler(command string) Executor
 	Execute(command string, args []string, userRank float64) *CommandResult
 }
 
-type Command struct {
-	Expr string
-	Args []string
-}
-
 type commandHandler struct {
-	chatService service.Chat
-	commandList map[string]CommandExecutor
+	processors *Processors
+	commandResults chan Event
+	commandList map[string]Executor
 }
 
-func NewCommandHandler(s service.Chat) CommandHandler {
-	commandList := map[string]CommandExecutor{
-		"rand":   NewRandCommand(),
-		"add":    NewAddCommand(),
-		"random": NewRandomMessageCommand(s),
-		"4chan":  NewFourchanCommand(),
+func NewCommandHandler(processors *Processors) CommandHandler {
+	commandList := map[string]Executor{
+		//"rand":       NewRandCommand(),
+		//"add":        NewAddCommand(),
+		//"random":     NewRandomMessageCommand(processors.Chat),
+		//"4chan":      NewFourchanCommand(),
+		//"setCmdRank": NewSetMinRankCommand(processors.Command),
+	}
+	err := processors.Command.InitRanks()
+	if err != nil {
+		//TODO: pass logger and write error
 	}
 	return &commandHandler{
-		chatService: s,
+		processors:  processors,
 		commandList: commandList,
+		commandResults: make(chan Event),
 	}
 }
 
-func (c *commandHandler) GetHandler(command string) CommandExecutor {
+func (c *commandHandler) Handle(msg models.Message) {
+	cleanedMessage := msg.Clean()
+	result, isCommand := c.Parse(cleanedMessage.Text)
+	if isCommand {
+		users := c.processors.Chat.GetUsers()
+		result := c.Execute(result.Expr, result.Args, users[msg.Username].Rank)
+		if result != nil {
+			for _, response := range result.Results {
+				if response != nil {
+					c.commandResults <- *response
+				}
+			}
+		}
+	}
+}
+
+func (c *commandHandler) GetHandler(command string) Executor {
 	return c.commandList[command]
-}
-
-func (c *commandHandler) IsCommandExecAllowed(userRank float64, handler CommandExecutor) bool {
-	if userRank < handler.GetMinRequiredRank() {
-		return false
-	}
-	return true
 }
 
 func (c *commandHandler) Parse(text string) (*Command, bool) {
@@ -97,7 +87,7 @@ func (c *commandHandler) Execute(command string, args []string, userRank float64
 			},
 		})
 	}
-	if !c.IsCommandExecAllowed(userRank, handler) {
+	if c.processors.Command.GetCommandRank(command) > userRank {
 		return NewCommandResult([]*Event{
 			{
 				Method:  "chatMsg",
@@ -125,3 +115,4 @@ func (c *commandHandler) Execute(command string, args []string, userRank float64
 	}
 	return result
 }
+

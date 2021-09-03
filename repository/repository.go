@@ -2,15 +2,15 @@ package repository
 
 import (
 	"fmt"
-	"sync-bot/pkg/models"
+	"sync-bot/models"
 
 	sq "github.com/Masterminds/squirrel"
 
-	"sync-bot/pkg/storages"
+	"sync-bot/storages"
 )
 
 type SyncRepository interface {
-	SaveHistory([]*models.Message) error
+	SaveHistory(message models.Message) error
 	RandomMessage(username string) (string, error)
 }
 
@@ -24,21 +24,17 @@ func NewSyncRepository(db *storages.Database) SyncRepository {
 	}
 }
 
-func (r *syncRepository) SaveHistory(messages []*models.Message) error {
+func (r *syncRepository) SaveHistory(message models.Message) error {
 	query := sq.Insert("chat_history").
-		Columns("timestamp", "username", "msg")
-	for _, key := range messages {
-		query = query.Values(key.Time, key.Username, key.Text)
-	}
+		Columns("timestamp", "username", "msg").
+		Values(message.Time, message.Username, message.Text)
 	sql, params, err := query.ToSql()
 	if err != nil {
 		return err
 	}
-	result, err := r.DB.Exec(sql, params...)
-	if err != nil {
+	if _, err = r.DB.Exec(sql, params...); err != nil {
 		return err
 	}
-	fmt.Printf("messages has been saved: %v", result)
 	return nil
 }
 

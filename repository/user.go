@@ -7,13 +7,13 @@ import (
 	"github.com/mattn/go-sqlite3"
 	_ "github.com/mattn/go-sqlite3"
 
-	"sync-bot/pkg/models"
-	"sync-bot/pkg/storages"
+	"sync-bot/models"
+	"sync-bot/storages"
 )
 
 type UserRepository interface {
-	SaveNewUser(user *models.User) error
-	UpdateUserRank(user *models.UpdatedUser) error
+	SaveNewUser(user models.User) error
+	UpdateUserRank(user models.UpdatedUser) error
 }
 
 type userRepository struct {
@@ -26,7 +26,7 @@ func NewUserRepository(db *storages.Database) UserRepository {
 	}
 }
 
-func (r *userRepository) SaveNewUser(user *models.User) error {
+func (r *userRepository) SaveNewUser(user models.User) error {
 	query := sq.Insert("users").
 		Columns("name", "rank").
 		Values(user.Name, user.Rank)
@@ -45,7 +45,7 @@ func (r *userRepository) SaveNewUser(user *models.User) error {
 	return nil
 }
 
-func (r *userRepository) UpdateUserRank(user *models.UpdatedUser) error {
+func (r *userRepository) UpdateUserRank(user models.UpdatedUser) error {
 	query := sq.Update("users").
 		Set("rank", user.Rank).
 		Where(sq.Eq{"name": user.Name})
