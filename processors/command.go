@@ -44,9 +44,8 @@ type commandProcessor struct {
 
 func NewCommandProcessor(repo repository.CommandRepository) CommandProcessor {
 	return &commandProcessor{
-		repo: repo,
-		commandRanks: map[string]float64{
-		},
+		repo:         repo,
+		commandRanks: map[string]float64{},
 	}
 }
 

@@ -1,8 +1,8 @@
 package processors
 
 import (
-	"strings"
 	"github.com/uninstallgentoo/go-syncbot/models"
+	"strings"
 )
 
 type Executor interface {
@@ -18,21 +18,20 @@ type CommandHandler interface {
 }
 
 type commandHandler struct {
-	processors *Processors
+	processors     *Processors
 	commandResults chan Event
-	commandList map[string]Executor
+	commandList    map[string]Executor
 }
 
 func NewCommandHandler(processors *Processors) CommandHandler {
-	commandList := map[string]Executor{
-	}
+	commandList := map[string]Executor{}
 	err := processors.Command.InitRanks()
 	if err != nil {
 		//TODO: pass logger and write error
 	}
 	return &commandHandler{
-		processors:  processors,
-		commandList: commandList,
+		processors:     processors,
+		commandList:    commandList,
 		commandResults: make(chan Event),
 	}
 }
@@ -78,7 +77,7 @@ func (c *commandHandler) Execute(command string, args []string, userRank float64
 		return NewCommandResult([]*Event{
 			{
 				Method:  "chatMsg",
-				Message: EventPayload{Message: "Команда отсутствует.", Meta: struct{}{}},
+				Message: EventPayload{Message: "Command doesn't exists.", Meta: struct{}{}},
 			},
 		})
 	}
@@ -86,7 +85,7 @@ func (c *commandHandler) Execute(command string, args []string, userRank float64
 		return NewCommandResult([]*Event{
 			{
 				Method:  "chatMsg",
-				Message: EventPayload{Message: "Отсутствуют права для выполнения команды.", Meta: struct{}{}},
+				Message: EventPayload{Message: "Permission denied for execution the command.", Meta: struct{}{}},
 			},
 		})
 	}
@@ -110,4 +109,3 @@ func (c *commandHandler) Execute(command string, args []string, userRank float64
 	}
 	return result
 }
-

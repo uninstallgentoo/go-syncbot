@@ -6,7 +6,7 @@ import (
 )
 
 type ChatHandler interface {
-	HandleMessage(msg models.Message)
+	SaveMessage(msg models.Message) error
 	AddUserToList(users []models.User)
 	SaveNewUser(user models.User) error
 	DeleteUser(user models.UserLeave)
@@ -24,15 +24,15 @@ type Chat struct {
 
 func NewChatHandler(repositories *repository.Repositories) *Chat {
 	return &Chat{
-		chatRepo:    repositories.Sync,
-		userRepo:    repositories.User,
+		chatRepo:       repositories.Sync,
+		userRepo:       repositories.User,
 		commandResults: make(chan Event),
 		users:          make(map[string]models.User, 0),
 	}
 }
 
-func (c *Chat) HandleMessage(msg models.Message) {
-	c.chatRepo.SaveHistory(msg)
+func (c *Chat) SaveMessage(msg models.Message) error {
+	return c.chatRepo.SaveHistory(msg)
 }
 
 func (c *Chat) SaveNewUser(user models.User) error {

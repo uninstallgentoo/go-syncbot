@@ -168,7 +168,9 @@ func (s *SocketClient) onChatMessage(_ *gosocketio.Channel, msg models.Message) 
 		return
 	}
 
-	s.chat.HandleMessage(msg)
+	if err := s.chat.SaveMessage(msg); err != nil {
+		s.logger.Error("fail save chat message", zap.Error(err))
+	}
 	s.commands.Handle(msg)
 	if err := s.Emit(); err != nil {
 		s.logger.Error("fail send message to socket.io", zap.Error(err))
