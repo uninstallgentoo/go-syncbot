@@ -13,6 +13,7 @@ import (
 	"github.com/graarh/golang-socketio/transport"
 	"go.uber.org/zap"
 
+	"github.com/uninstallgentoo/go-syncbot/command"
 	"github.com/uninstallgentoo/go-syncbot/config"
 	"github.com/uninstallgentoo/go-syncbot/models"
 	"github.com/uninstallgentoo/go-syncbot/processors"
@@ -49,12 +50,12 @@ type SocketClient struct {
 	conn      *gosocketio.Client
 	logger    *zap.Logger
 	chat      processors.ChatHandler
-	commands  processors.CommandHandler
+	commands  command.Handler
 	startedAt int64
 }
 
 // TODO: logger, pass ctx to repository
-func NewSocketClient(conf *config.Config, chat processors.ChatHandler, cmdHandler processors.CommandHandler, logger *zap.Logger) *SocketClient {
+func NewSocketClient(conf *config.Config, chat processors.ChatHandler, cmdHandler command.Handler, logger *zap.Logger) *SocketClient {
 	return &SocketClient{
 		conf:      conf,
 		chat:      chat,
@@ -189,7 +190,7 @@ func (s *SocketClient) registerEvents() error {
 }
 
 func (s *SocketClient) Emit() error {
-	for m := range s.chat.GetCommandResults() {
+	for m := range s.commands.GetCommandResults() {
 		if err := s.conn.Emit(m.Method, m.Message); err != nil {
 			return err
 		}

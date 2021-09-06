@@ -5,7 +5,6 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/mattn/go-sqlite3"
-	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/uninstallgentoo/go-syncbot/models"
 	"github.com/uninstallgentoo/go-syncbot/storages"

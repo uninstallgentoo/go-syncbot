@@ -6,6 +6,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/uninstallgentoo/go-syncbot/client"
+	"github.com/uninstallgentoo/go-syncbot/command"
 	"github.com/uninstallgentoo/go-syncbot/config"
 	"github.com/uninstallgentoo/go-syncbot/processors"
 	"github.com/uninstallgentoo/go-syncbot/repository"
@@ -27,7 +28,9 @@ func main() {
 	repositories := repository.NewRepositories(db)
 	botProcessors := processors.NewProcessors(repositories)
 
-	commandHandler := processors.NewCommandHandler(botProcessors)
+	commandHandler := command.NewCommandHandler(botProcessors)
+
+	commandHandler.RegisterCommands()
 
 	c := client.NewSocketClient(conf, botProcessors.Chat, commandHandler, logger)
 	c.Start()

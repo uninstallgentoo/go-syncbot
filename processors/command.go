@@ -12,29 +12,10 @@ type CommandProcessor interface {
 	InitRanks() error
 }
 
-type EventPayload struct {
-	Message string      `json:"msg"`
-	Meta    interface{} `json:"meta"`
-}
-
-type Event struct {
-	Method  string
-	Message interface{}
-}
-
-type CommandResult struct {
-	Results []*Event
-}
-
-func NewCommandResult(results []*Event) *CommandResult {
-	return &CommandResult{
+func NewCommandResult(results []*models.Event) *models.CommandResult {
+	return &models.CommandResult{
 		Results: results,
 	}
-}
-
-type Command struct {
-	Expr string
-	Args []string
 }
 
 type commandProcessor struct {
