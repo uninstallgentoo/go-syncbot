@@ -1,8 +1,8 @@
 package processors
 
 import (
-	"sync-bot/models"
-	"sync-bot/repository"
+	"github.com/uninstallgentoo/go-syncbot/models"
+	"github.com/uninstallgentoo/go-syncbot/repository"
 )
 
 type ChatHandler interface {
@@ -32,20 +32,7 @@ func NewChatHandler(repositories *repository.Repositories) *Chat {
 }
 
 func (c *Chat) HandleMessage(msg models.Message) {
-	//cleanedMessage := msg.Clean()
-	//result, isCommand := c.commandHandler.Parse(cleanedMessage.Text)
-	//if isCommand {
-	//	result := c.commandHandler.Execute(result.Expr, result.Args, c.users[msg.Username].Rank)
-	//	if result != nil {
-	//		for _, response := range result.Results {
-	//			if response != nil {
-	//				c.commandResults <- *response
-	//			}
-	//		}
-	//	}
-	//} else {
 	c.chatRepo.SaveHistory(msg)
-	//}
 }
 
 func (c *Chat) SaveNewUser(user models.User) error {

@@ -5,11 +5,11 @@ import (
 
 	"go.uber.org/zap"
 
-	"sync-bot/client"
-	"sync-bot/config"
-	"sync-bot/processors"
-	"sync-bot/repository"
-	"sync-bot/storages"
+	"github.com/uninstallgentoo/go-syncbot/client"
+	"github.com/uninstallgentoo/go-syncbot/config"
+	"github.com/uninstallgentoo/go-syncbot/processors"
+	"github.com/uninstallgentoo/go-syncbot/repository"
+	"github.com/uninstallgentoo/go-syncbot/storages"
 )
 
 func main() {

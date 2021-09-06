@@ -2,7 +2,7 @@ package processors
 
 import (
 	"strings"
-	"sync-bot/models"
+	"github.com/uninstallgentoo/go-syncbot/models"
 )
 
 type Executor interface {
@@ -25,11 +25,6 @@ type commandHandler struct {
 
 func NewCommandHandler(processors *Processors) CommandHandler {
 	commandList := map[string]Executor{
-		//"rand":       NewRandCommand(),
-		//"add":        NewAddCommand(),
-		//"random":     NewRandomMessageCommand(processors.Chat),
-		//"4chan":      NewFourchanCommand(),
-		//"setCmdRank": NewSetMinRankCommand(processors.Command),
 	}
 	err := processors.Command.InitRanks()
 	if err != nil {

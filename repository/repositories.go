@@ -1,6 +1,6 @@
 package repository
 
-import "sync-bot/storages"
+import "github.com/uninstallgentoo/go-syncbot/storages"
 
 type Repositories struct {
 	Command CommandRepository

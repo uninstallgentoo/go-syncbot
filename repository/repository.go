@@ -2,11 +2,11 @@ package repository
 
 import (
 	"fmt"
-	"sync-bot/models"
+	"github.com/uninstallgentoo/go-syncbot/models"
 
 	sq "github.com/Masterminds/squirrel"
 
-	"sync-bot/storages"
+	"github.com/uninstallgentoo/go-syncbot/storages"
 )
 
 type SyncRepository interface {

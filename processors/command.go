@@ -1,8 +1,8 @@
 package processors
 
 import (
-	"sync-bot/models"
-	"sync-bot/repository"
+	"github.com/uninstallgentoo/go-syncbot/models"
+	"github.com/uninstallgentoo/go-syncbot/repository"
 )
 
 type CommandProcessor interface {
@@ -46,11 +46,6 @@ func NewCommandProcessor(repo repository.CommandRepository) CommandProcessor {
 	return &commandProcessor{
 		repo: repo,
 		commandRanks: map[string]float64{
-			"rand":       1,
-			"add":        1,
-			"random":     1,
-			"4chan":      1,
-			"setCmdRank": 3,
 		},
 	}
 }

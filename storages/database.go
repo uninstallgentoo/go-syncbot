@@ -7,7 +7,7 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 
-	"sync-bot/config"
+	"github.com/uninstallgentoo/go-syncbot/config"
 )
 
 type Database struct {

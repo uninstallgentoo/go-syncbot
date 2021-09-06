@@ -1,4 +1,4 @@
-module sync-bot
+module github.com/uninstallgentoo/go-syncbot
 
 go 1.14
 

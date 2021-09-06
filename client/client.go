@@ -13,9 +13,9 @@ import (
 	"github.com/graarh/golang-socketio/transport"
 	"go.uber.org/zap"
 
-	"sync-bot/config"
-	"sync-bot/models"
-	"sync-bot/processors"
+	"github.com/uninstallgentoo/go-syncbot/config"
+	"github.com/uninstallgentoo/go-syncbot/models"
+	"github.com/uninstallgentoo/go-syncbot/processors"
 )
 
 //socket.io events

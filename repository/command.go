@@ -8,8 +8,8 @@ import (
 	"github.com/mattn/go-sqlite3"
 	_ "github.com/mattn/go-sqlite3"
 
-	"sync-bot/models"
-	"sync-bot/storages"
+	"github.com/uninstallgentoo/go-syncbot/models"
+	"github.com/uninstallgentoo/go-syncbot/storages"
 )
 
 type CommandRepository interface {

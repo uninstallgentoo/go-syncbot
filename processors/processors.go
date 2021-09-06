@@ -1,7 +1,7 @@
 package processors
 
 import (
-	"sync-bot/repository"
+	"github.com/uninstallgentoo/go-syncbot/repository"
 )
 
 type Processors struct {
