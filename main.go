@@ -7,6 +7,7 @@ import (
 
 	"github.com/uninstallgentoo/go-syncbot/client"
 	"github.com/uninstallgentoo/go-syncbot/command"
+	"github.com/uninstallgentoo/go-syncbot/commands"
 	"github.com/uninstallgentoo/go-syncbot/config"
 	"github.com/uninstallgentoo/go-syncbot/processors"
 	"github.com/uninstallgentoo/go-syncbot/repository"
@@ -28,9 +29,9 @@ func main() {
 	repositories := repository.NewRepositories(db)
 	botProcessors := processors.NewProcessors(repositories)
 
-	commandHandler := command.NewCommandHandler(botProcessors)
+	commandHandler := command.NewCommandHandler(botProcessors, logger)
 
-	commandHandler.RegisterCommands()
+	commandHandler.RegisterCommands(commands.Dice)
 
 	c := client.NewSocketClient(conf, botProcessors.Chat, commandHandler, logger)
 	c.Start()

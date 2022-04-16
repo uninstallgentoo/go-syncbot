@@ -9,8 +9,8 @@ type Processors struct {
 	Chat    ChatHandler
 }
 
-func NewProcessors(repo *repository.Repositories) *Processors {
-	return &Processors{
+func NewProcessors(repo *repository.Repositories) Processors {
+	return Processors{
 		Command: NewCommandProcessor(repo.Command),
 		Chat:    NewChatHandler(repo),
 	}

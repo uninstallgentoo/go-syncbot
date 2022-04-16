@@ -54,14 +54,12 @@ type SocketClient struct {
 	startedAt int64
 }
 
-// TODO: logger, pass ctx to repository
 func NewSocketClient(conf *config.Config, chat processors.ChatHandler, cmdHandler command.Handler, logger *zap.Logger) *SocketClient {
 	return &SocketClient{
-		conf:      conf,
-		chat:      chat,
-		commands:  cmdHandler,
-		logger:    logger,
-		startedAt: time.Now().Unix() * 1000,
+		conf:     conf,
+		chat:     chat,
+		commands: cmdHandler,
+		logger:   logger,
 	}
 }
 
@@ -168,11 +166,14 @@ func (s *SocketClient) onChatMessage(_ *gosocketio.Channel, msg models.Message) 
 	if msgTimestamp < s.startedAt {
 		return
 	}
-
+	if msg.Username == s.conf.User.Name {
+		return
+	}
+	s.logger.Info("Chat message", zap.String("Text", msg.Text), zap.String("Username", msg.Username))
 	if err := s.chat.SaveMessage(msg); err != nil {
 		s.logger.Error("fail save chat message", zap.Error(err))
 	}
-	s.commands.Handle(msg)
+	go s.commands.Handle(msg)
 	if err := s.Emit(); err != nil {
 		s.logger.Error("fail send message to socket.io", zap.Error(err))
 	}
@@ -212,6 +213,7 @@ func (s *SocketClient) Start() {
 	if err := s.registerEvents(); err != nil {
 		s.logger.Fatal("fail to subscription to event", zap.Error(err))
 	}
+	s.startedAt = time.Now().Unix() * 1000
 	done := make(chan bool)
 	go func() {
 		for {

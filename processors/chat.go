@@ -17,7 +17,7 @@ type ChatHandler interface {
 }
 
 type Chat struct {
-	m        *sync.RWMutex
+	m        *sync.Mutex
 	chatRepo repository.SyncRepository
 	userRepo repository.UserRepository
 	users    map[string]models.User
@@ -25,7 +25,7 @@ type Chat struct {
 
 func NewChatHandler(repositories *repository.Repositories) *Chat {
 	return &Chat{
-		m:        &sync.RWMutex{},
+		m:        &sync.Mutex{},
 		chatRepo: repositories.Sync,
 		userRepo: repositories.User,
 		users:    make(map[string]models.User, 0),
@@ -37,11 +37,11 @@ func (c *Chat) SaveMessage(msg models.Message) error {
 }
 
 func (c *Chat) SaveNewUser(user models.User) error {
+	c.m.Lock()
+	defer c.m.Unlock()
 	if err := c.userRepo.SaveNewUser(user); err != nil {
 		return err
 	}
-	c.m.RLock()
-	defer c.m.RUnlock()
 	if _, ok := c.users[user.Name]; !ok {
 		c.users[user.Name] = user
 	}
@@ -49,16 +49,16 @@ func (c *Chat) SaveNewUser(user models.User) error {
 }
 
 func (c *Chat) AddUserToList(users []models.User) {
-	c.m.RLock()
-	defer c.m.RUnlock()
+	c.m.Lock()
+	defer c.m.Unlock()
 	for _, user := range users {
 		c.users[user.Name] = user
 	}
 }
 
 func (c *Chat) DeleteUser(user models.UserLeave) {
-	c.m.RLock()
-	defer c.m.RUnlock()
+	c.m.Lock()
+	defer c.m.Unlock()
 	if _, ok := c.users[user.Name]; ok {
 		delete(c.users, user.Name)
 	}

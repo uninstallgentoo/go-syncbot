@@ -1,19 +1,34 @@
 package command
 
 import (
+	"go.uber.org/zap"
 	"strings"
-	"sync"
 
 	"github.com/uninstallgentoo/go-syncbot/models"
 	"github.com/uninstallgentoo/go-syncbot/processors"
 )
 
+type CommandExecutor interface {
+	GetCommand() *Command
+	GetName() string
+	GetDescription() string
+	GetRank() float64
+	SetProcessors(processors.Processors)
+	Exec(args []string, cmd *Command) (models.CommandResult, error)
+	Validate(args []string) error
+}
+
 type Command struct {
 	Name         string
 	Description  string
 	Rank         float64
-	ExecFunc     func() (*models.CommandResult, error)
+	ExecFunc     func([]string, *Command) (models.CommandResult, error)
+	Processors   processors.Processors
 	ValidateFunc func([]string) error
+}
+
+func (c *Command) GetCommand() *Command {
+	return c
 }
 
 func (c *Command) GetName() string {
@@ -28,42 +43,40 @@ func (c *Command) GetRank() float64 {
 	return c.Rank
 }
 
-func (c *Command) GetFunc() func() (*models.CommandResult, error) {
-	return c.ExecFunc
+func (c *Command) SetProcessors(p processors.Processors) {
+	c.Processors = p
 }
 
-func (c *Command) Validate() func([]string) error {
-	return nil
+func (c *Command) Exec(args []string, cmd *Command) (models.CommandResult, error) {
+	return c.ExecFunc(args, cmd)
 }
 
-type Executor interface {
-	Validate(args []string) error
-	Exec(args []string) (*models.CommandResult, error)
+func (c *Command) Validate(args []string) error {
+	return c.ValidateFunc(args)
 }
 
 type Handler interface {
 	Handle(msg models.Message)
-	Parse(text string) (Command, []string, bool)
-	Execute(command Command, args []string, userRank float64) *models.CommandResult
-	RegisterCommands(commands ...Command)
+	Parse(text string) (CommandExecutor, []string, bool)
+	Execute(command CommandExecutor, args []string, userRank float64) models.CommandResult
+	RegisterCommands(commands ...CommandExecutor)
 	GetCommandResults() chan models.Event
 }
 
 type commandHandler struct {
-	m              *sync.RWMutex
-	processors     *processors.Processors
+	processors     processors.Processors
 	commandResults chan models.Event
-	commandList    map[string]Command
+	commandList    map[string]CommandExecutor
+	logger         *zap.Logger
 }
 
-func NewCommandHandler(processors *processors.Processors) Handler {
-	commandList := map[string]Command{}
+func NewCommandHandler(processors processors.Processors, logger *zap.Logger) Handler {
+	commandList := map[string]CommandExecutor{}
 	err := processors.Command.InitRanks()
 	if err != nil {
-		//TODO: pass logger and write error
+		logger.Error("init ranks failed", zap.Error(err))
 	}
 	return &commandHandler{
-		m:              &sync.RWMutex{},
 		processors:     processors,
 		commandList:    commandList,
 		commandResults: make(chan models.Event),
@@ -74,10 +87,9 @@ func (c *commandHandler) GetCommandResults() chan models.Event {
 	return c.commandResults
 }
 
-func (c *commandHandler) RegisterCommands(commands ...Command) {
-	c.m.RLock()
-	defer c.m.RUnlock()
+func (c *commandHandler) RegisterCommands(commands ...CommandExecutor) {
 	for _, cmd := range commands {
+		cmd.SetProcessors(c.processors)
 		c.commandList[cmd.GetName()] = cmd
 	}
 }
@@ -88,9 +100,9 @@ func (c *commandHandler) Handle(msg models.Message) {
 	if isCommand {
 		users := c.processors.Chat.GetUsers()
 		result := c.Execute(command, args, users[msg.Username].Rank)
-		if result != nil {
+		if len(result.Results) > 0 {
 			for _, response := range result.Results {
-				if response != nil {
+				if response != nil && response.Message != nil {
 					c.commandResults <- *response
 				}
 			}
@@ -98,22 +110,22 @@ func (c *commandHandler) Handle(msg models.Message) {
 	}
 }
 
-func (c *commandHandler) GetHandler(command string) Command {
+func (c *commandHandler) GetHandler(command string) CommandExecutor {
 	return c.commandList[command]
 }
 
-func (c *commandHandler) Parse(text string) (Command, []string, bool) {
+func (c *commandHandler) Parse(text string) (CommandExecutor, []string, bool) {
 	if strings.HasPrefix(text, "!") {
 		message := strings.Split(text, " ")
-		cmd, args := message[0], message[1:]
+		cmd, args := message[0][1:], message[1:]
 		if command, ok := c.commandList[cmd]; ok {
 			return command, args, true
 		}
 	}
-	return Command{}, nil, false
+	return nil, nil, false
 }
 
-func (c *commandHandler) Execute(command Command, args []string, userRank float64) *models.CommandResult {
+func (c *commandHandler) Execute(command CommandExecutor, args []string, userRank float64) models.CommandResult {
 	if command.GetRank() > userRank {
 		return processors.NewCommandResult([]*models.Event{
 			{
@@ -122,17 +134,21 @@ func (c *commandHandler) Execute(command Command, args []string, userRank float6
 			},
 		})
 	}
-	err := command.Validate()(args)
-	if err != nil {
-		return processors.NewCommandResult([]*models.Event{
-			{
-				Method:  "chatMsg",
-				Message: models.EventPayload{Message: err.Error(), Meta: struct{}{}},
-			},
-		})
+
+	if command.Validate != nil {
+		if err := command.Validate(args); err != nil {
+			return processors.NewCommandResult([]*models.Event{
+				{
+					Method:  "chatMsg",
+					Message: models.EventPayload{Message: err.Error(), Meta: struct{}{}},
+				},
+			})
+		}
 	}
-	result, err := command.GetFunc()()
+
+	result, err := command.Exec(args, command.GetCommand())
 	if err != nil {
+		c.logger.Error("Error has occurred during command execution", zap.Error(err))
 		return processors.NewCommandResult([]*models.Event{
 			{
 				Method:  "chatMsg",
