@@ -10,6 +10,7 @@ import (
 
 type CommandExecutor interface {
 	GetCommand() *Command
+	GetValidateFunc() func([]string) error
 	GetName() string
 	GetDescription() string
 	GetRank() float64
@@ -29,6 +30,10 @@ type Command struct {
 
 func (c *Command) GetCommand() *Command {
 	return c
+}
+
+func (c *Command) GetValidateFunc() func([]string) error {
+	return c.ValidateFunc
 }
 
 func (c *Command) GetName() string {
@@ -135,7 +140,7 @@ func (c *commandHandler) Execute(command CommandExecutor, args []string, userRan
 		})
 	}
 
-	if command.Validate != nil {
+	if command.GetValidateFunc() != nil {
 		if err := command.Validate(args); err != nil {
 			return processors.NewCommandResult([]*models.Event{
 				{

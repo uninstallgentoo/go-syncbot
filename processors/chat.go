@@ -14,6 +14,7 @@ type ChatHandler interface {
 	DeleteUser(user models.UserLeave)
 	UpdateUserRank(user models.UpdatedUser) error
 	GetUsers() map[string]models.User
+	UpdateUserAfkState(updatedUser models.AFKState)
 }
 
 type Chat struct {
@@ -73,4 +74,11 @@ func (c *Chat) UpdateUserRank(user models.UpdatedUser) error {
 
 func (c *Chat) GetUsers() map[string]models.User {
 	return c.users
+}
+
+func (c *Chat) UpdateUserAfkState(updatedUser models.AFKState) {
+	if user, ok := c.users[updatedUser.Name]; ok {
+		user.Meta.AFK = updatedUser.AFK
+		c.users[updatedUser.Name] = user
+	}
 }

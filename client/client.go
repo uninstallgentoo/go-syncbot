@@ -28,6 +28,7 @@ const (
 	OnAddUser         = "addUser"
 	OnUserlist        = "userlist"
 	OnUserLeave       = "userLeave"
+	OnAfkStateChange  = "setAFK"
 )
 
 type Server struct {
@@ -65,11 +66,12 @@ func NewSocketClient(conf *config.Config, chat processors.ChatHandler, cmdHandle
 
 func (s *SocketClient) initEventsMap() Events {
 	return Events{
-		ChatMessage:   s.onChatMessage,
-		OnAddUser:     s.onAddUser,
-		OnSetUserRank: s.onSetUserRank,
-		OnUserlist:    s.onUserList,
-		OnUserLeave:   s.onUserLeave,
+		ChatMessage:      s.onChatMessage,
+		OnAddUser:        s.onAddUser,
+		OnSetUserRank:    s.onSetUserRank,
+		OnUserlist:       s.onUserList,
+		OnUserLeave:      s.onUserLeave,
+		OnAfkStateChange: s.onAfkStateChange,
 	}
 }
 
@@ -177,6 +179,10 @@ func (s *SocketClient) onChatMessage(_ *gosocketio.Channel, msg models.Message) 
 	if err := s.Emit(); err != nil {
 		s.logger.Error("fail send message to socket.io", zap.Error(err))
 	}
+}
+
+func (s *SocketClient) onAfkStateChange(_ *gosocketio.Channel, msg models.AFKState) {
+	s.chat.UpdateUserAfkState(msg)
 }
 
 func (s *SocketClient) registerEvents() error {

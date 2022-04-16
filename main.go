@@ -31,7 +31,7 @@ func main() {
 
 	commandHandler := command.NewCommandHandler(botProcessors, logger)
 
-	commandHandler.RegisterCommands(commands.Dice)
+	commandHandler.RegisterCommands(commands.Dice, commands.Alert)
 
 	c := client.NewSocketClient(conf, botProcessors.Chat, commandHandler, logger)
 	c.Start()

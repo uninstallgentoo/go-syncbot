@@ -28,3 +28,8 @@ type UpdatedUser struct {
 type UserLeave struct {
 	Name string `json:"name"`
 }
+
+type AFKState struct {
+	Name string `json:"name"`
+	AFK  bool   `json:"afk"`
+}
