@@ -64,8 +64,8 @@ func (r *commandRepository) UpdateRank(user *models.Command) error {
 }
 
 func (r *commandRepository) FetchAll() ([]*models.Command, error) {
-	query := sq.Select("command_rank").
-		Columns("name", "rank")
+	query := sq.Select("command", "rank").
+		From("command_rank")
 	sql, params, err := query.ToSql()
 	if err != nil {
 		return nil, err
