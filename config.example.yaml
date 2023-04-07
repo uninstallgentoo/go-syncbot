@@ -1,6 +1,5 @@
 server:
   host: ""
-  port: 10443
   secure: true
 channel:
   name: ""

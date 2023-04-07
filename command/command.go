@@ -1,11 +1,14 @@
 package command
 
 import (
-	"go.uber.org/zap"
 	"strings"
 
+	"go.uber.org/zap"
+
+	"github.com/uninstallgentoo/go-syncbot/config"
 	"github.com/uninstallgentoo/go-syncbot/models"
 	"github.com/uninstallgentoo/go-syncbot/processors"
+	"github.com/uninstallgentoo/go-syncbot/storages"
 )
 
 type CommandExecutor interface {
@@ -15,6 +18,8 @@ type CommandExecutor interface {
 	GetDescription() string
 	GetRank() float64
 	SetProcessors(processors.Processors)
+	SetConfig(*config.Config)
+	SetCache(*storages.CacheStorage)
 	Exec(args []string, cmd *Command) (models.CommandResult, error)
 	Validate(args []string) error
 }
@@ -25,6 +30,8 @@ type Command struct {
 	Rank         float64
 	ExecFunc     func([]string, *Command) (models.CommandResult, error)
 	Processors   processors.Processors
+	Config       *config.Config
+	Cache        *storages.CacheStorage
 	ValidateFunc func([]string) error
 }
 
@@ -52,6 +59,14 @@ func (c *Command) SetProcessors(p processors.Processors) {
 	c.Processors = p
 }
 
+func (c *Command) SetConfig(conf *config.Config) {
+	c.Config = conf
+}
+
+func (c *Command) SetCache(cache *storages.CacheStorage) {
+	c.Cache = cache
+}
+
 func (c *Command) Exec(args []string, cmd *Command) (models.CommandResult, error) {
 	return c.ExecFunc(args, cmd)
 }
@@ -70,12 +85,14 @@ type Handler interface {
 
 type commandHandler struct {
 	processors     processors.Processors
+	cache          *storages.CacheStorage
 	commandResults chan models.Event
 	commandList    map[string]CommandExecutor
 	logger         *zap.Logger
+	conf           *config.Config
 }
 
-func NewCommandHandler(processors processors.Processors, logger *zap.Logger) Handler {
+func NewCommandHandler(processors processors.Processors, cache *storages.CacheStorage, logger *zap.Logger, conf *config.Config) Handler {
 	commandList := map[string]CommandExecutor{}
 	err := processors.Command.InitRanks()
 	if err != nil {
@@ -83,8 +100,10 @@ func NewCommandHandler(processors processors.Processors, logger *zap.Logger) Han
 	}
 	return &commandHandler{
 		processors:     processors,
+		cache:          cache,
 		commandList:    commandList,
 		commandResults: make(chan models.Event),
+		conf:           conf,
 	}
 }
 
@@ -95,6 +114,8 @@ func (c *commandHandler) GetCommandResults() chan models.Event {
 func (c *commandHandler) RegisterCommands(commands ...CommandExecutor) {
 	for _, cmd := range commands {
 		cmd.SetProcessors(c.processors)
+		cmd.SetConfig(c.conf)
+		cmd.SetCache(c.cache)
 		c.commandList[cmd.GetName()] = cmd
 	}
 }
@@ -107,8 +128,8 @@ func (c *commandHandler) Handle(msg models.Message) {
 		result := c.Execute(command, args, users[msg.Username].Rank)
 		if len(result.Results) > 0 {
 			for _, response := range result.Results {
-				if response != nil && response.Message != nil {
-					c.commandResults <- *response
+				if response.Message != nil {
+					c.commandResults <- response
 				}
 			}
 		}
@@ -132,34 +153,26 @@ func (c *commandHandler) Parse(text string) (CommandExecutor, []string, bool) {
 
 func (c *commandHandler) Execute(command CommandExecutor, args []string, userRank float64) models.CommandResult {
 	if command.GetRank() > userRank {
-		return processors.NewCommandResult([]*models.Event{
-			{
-				Method:  "chatMsg",
-				Message: models.EventPayload{Message: "Permission denied for execution the command.", Meta: struct{}{}},
-			},
-		})
+		return models.NewCommandResult(
+			models.NewChatMessage("Permission denied for execution the command."),
+		)
 	}
 
 	if command.GetValidateFunc() != nil {
 		if err := command.Validate(args); err != nil {
-			return processors.NewCommandResult([]*models.Event{
-				{
-					Method:  "chatMsg",
-					Message: models.EventPayload{Message: err.Error(), Meta: struct{}{}},
-				},
-			})
+			return models.NewCommandResult(
+				models.NewChatMessage(err.Error()),
+			)
 		}
 	}
 
 	result, err := command.Exec(args, command.GetCommand())
 	if err != nil {
 		c.logger.Error("Error has occurred during command execution", zap.Error(err))
-		return processors.NewCommandResult([]*models.Event{
-			{
-				Method:  "chatMsg",
-				Message: models.EventPayload{Message: err.Error(), Meta: struct{}{}},
-			},
-		})
+		return models.NewCommandResult(
+			models.NewChatMessage(err.Error()),
+		)
+
 	}
 	return result
 }

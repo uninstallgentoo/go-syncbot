@@ -10,7 +10,6 @@ import (
 
 type Server struct {
 	Host   string `yaml:"host"`
-	Port   int    `yaml:"port"`
 	Secure bool   `yaml:"secure"`
 }
 
@@ -28,11 +27,21 @@ type Database struct {
 	Path string `yaml:"path"`
 }
 
+type WeatherAPI struct {
+	URL   string `yaml:"url"`
+	Token string `yaml:"token"`
+}
+
+type ExternalServices struct {
+	Weather WeatherAPI `yaml:"weather"`
+}
+
 type Config struct {
-	Server   `yaml:"server"`
-	Channel  `yaml:"channel"`
-	User     `yaml:"user"`
-	Database `yaml:"database"`
+	Server           `yaml:"server"`
+	Channel          `yaml:"channel"`
+	User             `yaml:"user"`
+	Database         `yaml:"database"`
+	ExternalServices `yaml:"external_services"`
 }
 
 const BotConfigFile = "config.yaml"

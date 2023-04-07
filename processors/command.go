@@ -12,7 +12,7 @@ type CommandProcessor interface {
 	InitRanks() error
 }
 
-func NewCommandResult(results []*models.Event) models.CommandResult {
+func NewCommandResult(results []models.Event) models.CommandResult {
 	return models.CommandResult{
 		Results: results,
 	}

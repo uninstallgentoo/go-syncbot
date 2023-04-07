@@ -19,7 +19,7 @@ import (
 	"github.com/uninstallgentoo/go-syncbot/processors"
 )
 
-//socket.io events
+// socket.io events
 const (
 	JoinChannelMethod = "joinChannel"
 	LoginMethod       = "login"

@@ -15,6 +15,7 @@ type ChatHandler interface {
 	UpdateUserRank(user models.UpdatedUser) error
 	GetUsers() map[string]models.User
 	UpdateUserAfkState(updatedUser models.AFKState)
+	FetchUserStatistic(user models.User) (int, error)
 }
 
 type Chat struct {
@@ -81,4 +82,12 @@ func (c *Chat) UpdateUserAfkState(updatedUser models.AFKState) {
 		user.Meta.AFK = updatedUser.AFK
 		c.users[updatedUser.Name] = user
 	}
+}
+
+func (c *Chat) FetchUserStatistic(user models.User) (int, error) {
+	count, err := c.chatRepo.FetchUserStatistic(user.Name)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }

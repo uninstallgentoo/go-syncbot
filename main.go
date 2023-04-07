@@ -1,8 +1,6 @@
 package main
 
 import (
-	"runtime"
-
 	"go.uber.org/zap"
 
 	"github.com/uninstallgentoo/go-syncbot/client"
@@ -15,8 +13,6 @@ import (
 )
 
 func main() {
-	runtime.GOMAXPROCS(runtime.NumCPU())
-
 	logger, err := zap.NewProduction()
 	defer logger.Sync()
 
@@ -29,9 +25,18 @@ func main() {
 	repositories := repository.NewRepositories(db)
 	botProcessors := processors.NewProcessors(repositories)
 
-	commandHandler := command.NewCommandHandler(botProcessors, logger)
+	cacheStorage := storages.NewCacheStorage()
+	commandHandler := command.NewCommandHandler(botProcessors, cacheStorage, logger, conf)
 
-	commandHandler.RegisterCommands(commands.Dice, commands.Alert)
+	commandHandler.RegisterCommands(
+		commands.Dice,
+		commands.Alert,
+		commands.Stat,
+		commands.Pick,
+		commands.MagicBall,
+		commands.Who,
+		commands.Weather,
+	)
 
 	c := client.NewSocketClient(conf, botProcessors.Chat, commandHandler, logger)
 	c.Start()

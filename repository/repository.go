@@ -12,6 +12,7 @@ import (
 type SyncRepository interface {
 	SaveHistory(message models.Message) error
 	RandomMessage(username string) (string, error)
+	FetchUserStatistic(username string) (int, error)
 }
 
 type syncRepository struct {
@@ -56,4 +57,20 @@ func (r *syncRepository) RandomMessage(username string) (string, error) {
 	}
 	quote := fmt.Sprintf("[%s][%s] %s", timestamp, username, msg)
 	return quote, nil
+}
+
+func (r *syncRepository) FetchUserStatistic(username string) (int, error) {
+	query := sq.Select("count(*)").
+		From("chat_history").
+		Where(sq.Eq{"username": username})
+	sql, params, err := query.ToSql()
+	if err != nil {
+		return 0, err
+	}
+	var count int
+	err = r.DB.QueryRow(sql, params...).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }
