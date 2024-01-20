@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"go.uber.org/zap"
 
 	sq "github.com/Masterminds/squirrel"
@@ -34,8 +35,9 @@ func (r *userRepository) SaveNewUser(user models.User) error {
 		return err
 	}
 	result, err := r.DB.Exec(sql, params...)
-	if sqliteErr, ok := err.(sqlite3.Error); ok {
-		if sqliteErr.Code == sqlite3.ErrConstraint {
+	var sqliteErr sqlite3.Error
+	if errors.As(err, &sqliteErr) {
+		if errors.Is(sqliteErr.Code, sqlite3.ErrConstraint) {
 			return nil
 		}
 		return err

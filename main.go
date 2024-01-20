@@ -36,6 +36,7 @@ func main() {
 		commands.MagicBall,
 		commands.Who,
 		commands.Weather,
+		commands.Quote,
 	)
 
 	c := client.NewSocketClient(conf, botProcessors.Chat, commandHandler, logger)

@@ -16,6 +16,7 @@ type ChatHandler interface {
 	GetUsers() map[string]models.User
 	UpdateUserAfkState(updatedUser models.AFKState)
 	FetchUserStatistic(user models.User) (int, error)
+	GetUserQuote(user models.User) (string, error)
 }
 
 type Chat struct {
@@ -90,4 +91,12 @@ func (c *Chat) FetchUserStatistic(user models.User) (int, error) {
 		return 0, err
 	}
 	return count, nil
+}
+
+func (c *Chat) GetUserQuote(user models.User) (string, error) {
+	quote, err := c.chatRepo.GetUserQuote(user.Name)
+	if err != nil {
+		return "", nil
+	}
+	return quote, nil
 }

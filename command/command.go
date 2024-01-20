@@ -104,6 +104,7 @@ func NewCommandHandler(processors processors.Processors, cache *storages.CacheSt
 		commandList:    commandList,
 		commandResults: make(chan models.Event),
 		conf:           conf,
+		logger:         logger,
 	}
 }
 

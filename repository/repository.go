@@ -13,6 +13,7 @@ type SyncRepository interface {
 	SaveHistory(message models.Message) error
 	RandomMessage(username string) (string, error)
 	FetchUserStatistic(username string) (int, error)
+	GetUserQuote(username string) (string, error)
 }
 
 type syncRepository struct {
@@ -73,4 +74,22 @@ func (r *syncRepository) FetchUserStatistic(username string) (int, error) {
 		return 0, err
 	}
 	return count, nil
+}
+
+func (r *syncRepository) GetUserQuote(username string) (string, error) {
+	query := sq.Select("msg").
+		From("chat_history").
+		Where(sq.Eq{"username": username}).
+		OrderBy("RANDOM()").
+		Limit(1)
+	sql, params, err := query.ToSql()
+	if err != nil {
+		return "", err
+	}
+	var quote string
+	err = r.DB.QueryRow(sql, params...).Scan(&quote)
+	if err != nil {
+		return "", err
+	}
+	return quote, nil
 }

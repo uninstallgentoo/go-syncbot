@@ -64,7 +64,7 @@ var Weather = &command.Command{
 		req.URL.RawQuery = q.Encode()
 
 		res, getErr := weatherClient.Do(req)
-		if getErr != nil {
+		if getErr != nil || res.StatusCode != http.StatusOK {
 			return models.CommandResult{}, weatherAPIError
 		}
 
@@ -94,7 +94,7 @@ var Weather = &command.Command{
 		defer cmd.Cache.Set(
 			fmt.Sprintf("weather_%s", args[0]),
 			msg,
-			time.Duration(time.Hour),
+			time.Hour,
 		)
 		return models.NewCommandResult(
 			models.NewChatMessage(msg),
