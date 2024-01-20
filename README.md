@@ -46,6 +46,15 @@ docker compose up
 
 ## Build
 
+Apply migrations to the database using the following command:
+
+```bash
+# install goose as a database migration tool
+go install github.com/pressly/goose/v3/cmd/goose@latest
+
+goose -dir ./migrations sqlite3 ./storages/bot.db up
+```
+
 Navigate to the repository directory and build the executable using the following command:
 
 ```bash
