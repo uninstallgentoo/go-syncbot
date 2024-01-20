@@ -1,0 +1,23 @@
+version: "3.8"
+
+services:
+
+  migrations:
+    image: ghcr.io/kukymbr/goose-docker:3.17.0
+    environment:
+      - GOOSE_DRIVER=sqlite
+      - GOOSE_DBSTRING=/storages/bot.db
+      - GOOSE_VERBOSE=true
+    volumes:
+      - ./migrations:/migrations
+      - ./storages:/storages
+
+  syncbot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+    volumes:
+      - ./storages:/storages
